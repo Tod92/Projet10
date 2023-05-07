@@ -20,18 +20,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6+ceym2g$g$f4!5^wohu#6$pou(z0v($!%hol)8_r9(1-ahs(o'
+SECRET_KEY = 'django-insecure-2j1z7w2=b#=%g7ln)u-c=d&@gh5$_we0n$36^2v6b(i)ngptg9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Rest_framework pagination
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
-}
+AUTH_USER_MODEL = 'api.User'
+
 
 # Application definition
 
@@ -42,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework'
+    'rest_framework',
+    'api'
 ]
 
 MIDDLEWARE = [

@@ -5,12 +5,14 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class User(AbstractUser):
-    pass
+    time_created = models.DateTimeField(auto_now_add=True)
+
 
 class Project(models.Model):
     title = models.CharField(max_length=30)
     description = models.CharField(max_length=1000)
     type = models.CharField(max_length=30)
+    time_created = models.DateTimeField(auto_now_add=True)
 
     contributors = models.ManyToManyField(User,
                                           # limit_choices_to={'role': CREATOR},
@@ -25,9 +27,11 @@ class Issue(models.Model):
     tag = models.CharField(max_length=30)
     priority = models.CharField(max_length=30)
     status = models.CharField(max_length=30)
+    time_created = models.DateTimeField(auto_now_add=True)
 
 class Comment(models.Model):
     description = models.CharField(max_length=1000)
+    time_created = models.DateTimeField(auto_now_add=True)
 
 class Contributor(models.Model):
     """
@@ -35,10 +39,10 @@ class Contributor(models.Model):
     """
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE,
-                             related_name='contrinutions')
+                             related_name='contributions')
 
     project = models.ForeignKey(to=Project,
                                 on_delete=models.CASCADE,
-                                related_name='contrinutions')
+                                related_name='contributions')
 
     time_created = models.DateTimeField(auto_now_add=True)

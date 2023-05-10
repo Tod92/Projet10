@@ -26,7 +26,7 @@ class IssueViewset(ModelViewSet):
 
     serializer_class = IssueSerializer
     def get_queryset(self):
-        queryset = Issue.objects.filter(status="active")
+        queryset = Issue.objects.filter(status='TODO')
         # http://127.0.0.1:8000/api/issue/?priority=1
         project_id = self.request.GET.get('project_id')
         if project_id:

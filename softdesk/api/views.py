@@ -4,10 +4,38 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from api.models import Project, User, Issue
 from api.serializers import ProjectSerializer, UserSerializer, IssueSerializer
 
+#
+# class MultipleSerializerMixin:
+#
+#     detail_serializer_class = None
+#
+#     def get_serializer_class(self):
+#         if self.action == 'retrieve' and self.detail_serializer_class is not None:
+#             return self.detail_serializer_class
+#         return super().get_serializer_class()
+#
+# class AdminProjectViewset(MultipleSerializerMixin, ModelViewSet):
+#
+#     serializer_class = CategoryListSerializer
+#     detail_serializer_class = CategoryDetailSerializer
+#     # Nous avons simplement à appliquer la permission sur le viewset
+#     permission_classes = [IsAuthenticated]
+#
+#     def get_queryset(self):
+#         return Category.objects.all()
+# view for registering users
+
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 class UserAPIView(APIView):
 

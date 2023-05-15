@@ -84,7 +84,8 @@ class Issue(models.Model):
 
     project_id = models.ForeignKey(
         Project,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="issues"
         )
     # ProtectedError si on supprime le user, un commenteire perdu peut poser pb
     author_user_id = models.ForeignKey(

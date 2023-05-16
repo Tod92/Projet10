@@ -1,11 +1,10 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
 from api.models import (
     Project,
@@ -19,13 +18,26 @@ from api.serializers import (
     IssueSerializer,
     ContributorSerializer
 )
-# class ProjectViewset(ModelViewSet):
-#
-#     serializer_class = ProjectSerializer
-#     def get_queryset(self):
-#         return Project.objects.all()
+
+class IsAuthorOrReadOnly(permissions.BasePermission):
+    """
+    Object-level permission to only allow owners of an object to edit it.
+    Assumes the model instance has an `author_user_id` attribute.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Instance must have an attribute named `owner`.
+        return obj.author_user_id == request.user
 
 class ProjectListCreate(APIView):
+    """
+    supports get and post
+    """
     def get(self, request):
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
@@ -40,6 +52,8 @@ class ProjectListCreate(APIView):
         return Response(serializer.data)
 
 class ProjectDetailUpdateDelete(APIView):
+    permission_classes = [IsAuthorOrReadOnly]
+    
     def get(self, request, project_id):
         project = Project.objects.get(id=project_id)
         serializer = ProjectSerializer(project)

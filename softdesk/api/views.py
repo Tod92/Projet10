@@ -1,10 +1,11 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import status, permissions
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
+from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
 
 from api.models import (
     Project,
@@ -19,7 +20,7 @@ from api.serializers import (
     ContributorSerializer
 )
 
-class IsAuthorOrReadOnly(permissions.BasePermission):
+class IsAuthorOrReadOnly(BasePermission):
     """
     Object-level permission to only allow owners of an object to edit it.
     Assumes the model instance has an `author_user_id` attribute.
@@ -28,11 +29,22 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Read permissions are allowed to any request,
         # so we'll always allow GET, HEAD or OPTIONS requests.
-        if request.method in permissions.SAFE_METHODS:
+        if request.method in SAFE_METHODS:
             return True
 
         # Instance must have an attribute named `owner`.
         return obj.author_user_id == request.user
+
+class IsAuthor(BasePermission):
+    """
+    Object-level permission to only allow owners of an object to edit it.
+    Assumes the model instance has an `author_user_id` attribute.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Instance must have an attribute named `owner`.
+        return obj.author_user_id == request.user
+
 
 class ProjectListCreate(APIView):
     """
@@ -52,8 +64,8 @@ class ProjectListCreate(APIView):
         return Response(serializer.data)
 
 class ProjectDetailUpdateDelete(APIView):
-    permission_classes = [IsAuthorOrReadOnly]
-    
+    permission_classes = [IsAuthenticated&IsAuthor]
+
     def get(self, request, project_id):
         project = Project.objects.get(id=project_id)
         serializer = ProjectSerializer(project)

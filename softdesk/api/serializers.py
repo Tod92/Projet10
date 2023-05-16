@@ -40,4 +40,4 @@ class ContributorSerializer(serializers.HyperlinkedModelSerializer):
     # en lui précisant un serializer paramétré à 'many=True' car les produits sont multiples pour une catégorie
     class Meta:
         model = Contributor
-        fields = ['user_id']
+        fields = ['user_id','project_id']

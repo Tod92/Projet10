@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Group
 from rest_framework import serializers
-from .models import User, Project, Issue
+from .models import User, Project, Issue, Contributor
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,8 +27,17 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type']
-    # def create(self, validated_data):
-    #     project = Project.objects.create(
-    #         title=validated_data['title'],
-    #         description=validated_data['description'],
-    #     )
+
+    def update(self, instance, validated_data):
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+        instance.type = validated_data.get('type', instance.type)
+        instance.save()
+        return instance
+
+class ContributorSerializer(serializers.HyperlinkedModelSerializer):
+    # Nous redéfinissons l'attribut 'product' qui porte le même nom que dans la liste des champs à afficher
+    # en lui précisant un serializer paramétré à 'many=True' car les produits sont multiples pour une catégorie
+    class Meta:
+        model = Contributor
+        fields = ['user_id']

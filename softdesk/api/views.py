@@ -1,14 +1,24 @@
 from django.shortcuts import render
 
 # Create your views here.
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from api.models import Project, User, Issue
-from api.serializers import ProjectSerializer, UserSerializer, IssueSerializer
-
+from api.models import (
+    Project,
+    User,
+    Issue,
+    Contributor
+)
+from api.serializers import (
+    ProjectSerializer,
+    UserSerializer,
+    IssueSerializer,
+    ContributorSerializer
+)
 # class ProjectViewset(ModelViewSet):
 #
 #     serializer_class = ProjectSerializer
@@ -22,12 +32,40 @@ class ProjectListCreate(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+
         serializer = ProjectSerializer(data=request.data)
         # serializer.data.user_author_id = request.user
         serializer.is_valid(raise_exception=True)
         serializer.save(author_user_id=request.user)
         return Response(serializer.data)
 
+class ProjectDetailUpdateDelete(APIView):
+    def get(self, request, project_id):
+        project = Project.objects.get(id=project_id)
+        serializer = ProjectSerializer(project)
+        return Response(serializer.data)
+
+    def put(self, request, project_id):
+        project = Project.objects.get(id=project_id)
+        serializer = ProjectSerializer(project, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, project_id):
+        project = Project.objects.get(id=project_id)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ContributorListCreate(APIView):
+    def get(self, request, project_id):
+        contributors = Contributor.objects.filter(project_id=project_id)
+        serializer = ContributorSerializer(contributors, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, project_id):
+        pass
 
 class RegisterView(APIView):
     def post(self, request):

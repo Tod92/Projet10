@@ -26,6 +26,8 @@ from api.views import (
     UserAPIView,
     RegisterView,
     ProjectListCreate,
+    ProjectDetailUpdateDelete,
+    ContributorListCreate,
     IssueViewset
 )
 # Ici nous créons notre routeur
@@ -43,5 +45,8 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/user/', UserAPIView.as_view()),
     path('api/projects/', ProjectListCreate.as_view()),
+    path('api/projects/<int:project_id>/', ProjectDetailUpdateDelete.as_view()),
+    path('api/projects/<int:project_id>/users/', ContributorListCreate.as_view()),
+
     path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
 ]

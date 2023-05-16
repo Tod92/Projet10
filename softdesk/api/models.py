@@ -143,3 +143,9 @@ class Contributor(models.Model):
                                 related_name='contributing_to')
 
     time_created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user_id', 'project_id'],
+                                    name="unique_contibutor")
+        ]

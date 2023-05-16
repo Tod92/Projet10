@@ -9,26 +9,25 @@ from rest_framework.permissions import IsAuthenticated
 from api.models import Project, User, Issue
 from api.serializers import ProjectSerializer, UserSerializer, IssueSerializer
 
+# class ProjectViewset(ModelViewSet):
 #
-# class MultipleSerializerMixin:
-#
-#     detail_serializer_class = None
-#
-#     def get_serializer_class(self):
-#         if self.action == 'retrieve' and self.detail_serializer_class is not None:
-#             return self.detail_serializer_class
-#         return super().get_serializer_class()
-#
-# class AdminProjectViewset(MultipleSerializerMixin, ModelViewSet):
-#
-#     serializer_class = CategoryListSerializer
-#     detail_serializer_class = CategoryDetailSerializer
-#     # Nous avons simplement à appliquer la permission sur le viewset
-#     permission_classes = [IsAuthenticated]
-#
+#     serializer_class = ProjectSerializer
 #     def get_queryset(self):
-#         return Category.objects.all()
-# view for registering users
+#         return Project.objects.all()
+
+class ProjectListCreate(APIView):
+    def get(self, request):
+        projects = Project.objects.all()
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ProjectSerializer(data=request.data)
+        # serializer.data.user_author_id = request.user
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author_user_id=request.user)
+        return Response(serializer.data)
+
 
 class RegisterView(APIView):
     def post(self, request):
@@ -38,17 +37,14 @@ class RegisterView(APIView):
         return Response(serializer.data)
 
 class UserAPIView(APIView):
-
+    """
+    test docstring
+    """
     def get(self, *args, **kwargs):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-class ProjectViewset(ReadOnlyModelViewSet):
-
-    serializer_class = ProjectSerializer
-    def get_queryset(self):
-        return Project.objects.all()
 
 class IssueViewset(ModelViewSet):
 

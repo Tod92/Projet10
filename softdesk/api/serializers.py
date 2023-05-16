@@ -21,10 +21,14 @@ class IssueSerializer(serializers.ModelSerializer):
         model = Issue
         fields = ['id', 'project_id', 'title', 'description', 'tag', 'priority', 'status']
 
-class ProjectSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     # Nous redéfinissons l'attribut 'product' qui porte le même nom que dans la liste des champs à afficher
     # en lui précisant un serializer paramétré à 'many=True' car les produits sont multiples pour une catégorie
-    issues = IssueSerializer(many=True)
     class Meta:
         model = Project
-        fields = ['id', 'title', 'description', 'type', 'issues']
+        fields = ['id', 'title', 'description', 'type']
+    # def create(self, validated_data):
+    #     project = Project.objects.create(
+    #         title=validated_data['title'],
+    #         description=validated_data['description'],
+    #     )

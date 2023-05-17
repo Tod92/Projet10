@@ -28,7 +28,8 @@ class Project(models.Model):
 
     # ProtectedError si on supprime le user, un projet perdu peut poser pb
     author_user_id = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                       on_delete=models.PROTECT)
+                                       on_delete=models.PROTECT,
+                                       related_name='project_author')
 
     type = models.CharField(
         max_length=10,
@@ -136,11 +137,11 @@ class Contributor(models.Model):
     """
     user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE,
-                             related_name='contributor')
+                             related_name='user_contributions')
 
     project_id = models.ForeignKey(to=Project,
                                 on_delete=models.CASCADE,
-                                related_name='contributing_to')
+                                related_name='project_contributions')
 
     time_created = models.DateTimeField(auto_now_add=True)
 

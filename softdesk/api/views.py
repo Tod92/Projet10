@@ -13,10 +13,13 @@ from api.models import (
     Issue,
     Contributor
 )
+
 from api.serializers import (
     ProjectSerializer,
+    ProjectListSerializer,
     UserSerializer,
     IssueSerializer,
+    IssueListSerializer,
     ContributorSerializer
 )
 
@@ -52,11 +55,10 @@ class ProjectListCreate(APIView):
     """
     def get(self, request):
         projects = Project.objects.all()
-        serializer = ProjectSerializer(projects, many=True)
+        serializer = ProjectListSerializer(projects, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-
         serializer = ProjectSerializer(data=request.data)
         # serializer.data.user_author_id = request.user
         serializer.is_valid(raise_exception=True)
@@ -83,17 +85,63 @@ class ProjectDetailUpdateDelete(APIView):
         project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class IssueListCreate(APIView):
+    """
+    supports get and post
+    """
+    def get(self, request, project_id):
+        issues = Issue.objects.filter(project_id=project_id)
+        serializer = IssueListSerializer(issues, many=True)
+        return Response(serializer.data)
 
-class ContributorListCreate(APIView):
+    def post(self, request, project_id):
+        project = Project.objects.get(id=project_id)
+        serializer = IssueSerializer(data=request.data)
+        # serializer.data.user_author_id = request.user
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            author_user_id=request.user,
+            project_id=project)
+        return Response(serializer.data)
+
+class IssueUpdateDelete(APIView):
+    permission_classes = [IsAuthenticated&IsAuthor]
+
+    def put(self, request, project_id, issue_id):
+        issue = Issue.objects.get(id=issue_id)
+        serializer = IssueSerializer(issue, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, project_id, issue_id):
+        issue = Issue.objects.get(id=issue_id)
+        issue.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ContributorListCreateDelete(APIView):
     def get(self, request, project_id):
         contributors = Contributor.objects.filter(project_id=project_id)
         serializer = ContributorSerializer(contributors, many=True)
         return Response(serializer.data)
 
     def post(self, request, project_id):
-        pass
+        serializer = ContributorSerializer(data=request.data)
+        # serializer.data.user_author_id = request.user
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, project_id, user_id):
+        contributor = Contributor.objects.filter(
+            project_id=project_id,
+            user_id=user_id
+        )
+        contributor.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RegisterView(APIView):
+    permission_classes = []
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -110,15 +158,15 @@ class UserAPIView(APIView):
         return Response(serializer.data)
 
 
-class IssueViewset(ModelViewSet):
-
-    serializer_class = IssueSerializer
-    def get_queryset(self):
-        queryset = Issue.objects.filter(status='TODO')
-        # http://127.0.0.1:8000/api/issue/?priority=1
-        project_id = self.request.GET.get('project_id')
-        if project_id:
-            queryset = queryset.filter(project_id=project_id)
-        return queryset
-    # def perform_create(self, serializer):
-    #     serializer.save(user=self.request.user)
+# class IssueViewset(ModelViewSet):
+#
+#     serializer_class = IssueSerializer
+#     def get_queryset(self):
+#         queryset = Issue.objects.filter(status='TODO')
+#         # http://127.0.0.1:8000/api/issue/?priority=1
+#         project_id = self.request.GET.get('project_id')
+#         if project_id:
+#             queryset = queryset.filter(project_id=project_id)
+#         return queryset
+#     # def perform_create(self, serializer):
+#     #     serializer.save(user=self.request.user)

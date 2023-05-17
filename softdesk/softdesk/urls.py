@@ -27,15 +27,16 @@ from api.views import (
     RegisterView,
     ProjectListCreate,
     ProjectDetailUpdateDelete,
-    ContributorListCreate,
-    IssueViewset
+    ContributorListCreateDelete,
+    IssueListCreate,
+    IssueUpdateDelete,
 )
-# Ici nous créons notre routeur
-router = routers.SimpleRouter()
-# Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view
-# afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
-router.register('issue', IssueViewset, basename='issue')
-
+# # Ici nous créons notre routeur
+# router = routers.SimpleRouter()
+# # Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view
+# # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
+# router.register('issue', IssueViewset, basename='issue')
+#
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -46,7 +47,10 @@ urlpatterns = [
     path('api/user/', UserAPIView.as_view()),
     path('api/projects/', ProjectListCreate.as_view()),
     path('api/projects/<int:project_id>/', ProjectDetailUpdateDelete.as_view()),
-    path('api/projects/<int:project_id>/users/', ContributorListCreate.as_view()),
+    path('api/projects/<int:project_id>/users/', ContributorListCreateDelete.as_view()),
+    path('api/projects/<int:project_id>/users/<int:user_id>', ContributorListCreateDelete.as_view()),
+    path('api/projects/<int:project_id>/issues/', IssueListCreate.as_view()),
+    path('api/projects/<int:project_id>/issues/<int:issue_id>', IssueUpdateDelete.as_view())
 
-    path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    # path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
 ]

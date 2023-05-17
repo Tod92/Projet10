@@ -11,6 +11,7 @@ from api.models import (
     Project,
     User,
     Issue,
+    Comment,
     Contributor
 )
 
@@ -20,6 +21,8 @@ from api.serializers import (
     UserSerializer,
     IssueSerializer,
     IssueListSerializer,
+    CommentSerializer,
+    CommentListSerializer,
     ContributorSerializer
 )
 
@@ -119,6 +122,45 @@ class IssueUpdateDelete(APIView):
         issue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class CommentListCreate(APIView):
+    """
+    supports get and post
+    """
+    def get(self, request, project_id, issue_id):
+        comments = Comment.objects.filter(issue_id=issue_id)
+        serializer = CommentListSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, project_id, issue_id):
+        issue = Issue.objects.get(id=issue_id)
+        serializer = CommentSerializer(data=request.data)
+        # serializer.data.user_author_id = request.user
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            author_user_id=request.user,
+            issue_id=issue)
+        return Response(serializer.data)
+
+class CommentDetailUpdateDelete(APIView):
+    permission_classes = [IsAuthenticated&IsAuthor]
+
+    def get(self, request, project_id, issue_id, comment_id):
+        comment = Comment.objects.get(id=comment_id)
+        serializer = CommentListSerializer(comment)
+        return Response(serializer.data)
+
+    def put(self, request, project_id, issue_id, comment_id):
+        comment = Comment.objects.get(id=comment_id)
+        serializer = CommentSerializer(comment, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, project_id, issue_id, comment_id):
+        comment = Comment.objects.get(id=comment_id)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class ContributorListCreateDelete(APIView):
     def get(self, request, project_id):
         contributors = Contributor.objects.filter(project_id=project_id)
@@ -126,10 +168,11 @@ class ContributorListCreateDelete(APIView):
         return Response(serializer.data)
 
     def post(self, request, project_id):
+        project = Project.objects.get(id=project_id)
         serializer = ContributorSerializer(data=request.data)
         # serializer.data.user_author_id = request.user
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(project_id=project)
         return Response(serializer.data)
 
     def delete(self, request, project_id, user_id):

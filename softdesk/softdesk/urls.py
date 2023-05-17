@@ -30,6 +30,8 @@ from api.views import (
     ContributorListCreateDelete,
     IssueListCreate,
     IssueUpdateDelete,
+    CommentListCreate,
+    CommentDetailUpdateDelete
 )
 # # Ici nous créons notre routeur
 # router = routers.SimpleRouter()
@@ -50,7 +52,9 @@ urlpatterns = [
     path('api/projects/<int:project_id>/users/', ContributorListCreateDelete.as_view()),
     path('api/projects/<int:project_id>/users/<int:user_id>', ContributorListCreateDelete.as_view()),
     path('api/projects/<int:project_id>/issues/', IssueListCreate.as_view()),
-    path('api/projects/<int:project_id>/issues/<int:issue_id>', IssueUpdateDelete.as_view())
+    path('api/projects/<int:project_id>/issues/<int:issue_id>', IssueUpdateDelete.as_view()),
+    path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/', CommentListCreate.as_view()),
+    path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
 
     # path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
 ]

@@ -38,7 +38,7 @@ from api.views import (
 # # Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view
 # # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
 # router.register('issue', IssueViewset, basename='issue')
-#
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),

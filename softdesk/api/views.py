@@ -38,7 +38,6 @@ class IsAuthorOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        # Instance must have an attribute named `owner`.
         return obj.author_user_id == request.user
 
 class IsAuthor(BasePermission):
@@ -51,6 +50,43 @@ class IsAuthor(BasePermission):
         # Instance must have an attribute named `owner`.
         return obj.author_user_id == request.user
 
+# Mixin dont les views devront hériter afin de viser un serializer different
+# pour le détail
+class MultipleSerializerMixin:
+
+    detail_serializer_class = None
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' and self.detail_serializer_class is not None:
+            return self.detail_serializer_class
+        if self.action == 'create' and self.detail_serializer_class is not None:
+            return self.detail_serializer_class
+        return super().get_serializer_class()
+
+"""
+    list : appel en GET  sur l’URL de liste ;
+
+    retrieve : appel en GET  sur l’URL de détail (qui comporte alors un identifiant) ;
+
+    create : appel en POST  sur l’URL de liste ;
+
+    update : appel en PUT  sur l’URL de détail ;
+
+    partial_update : appel en PATCH  sur l’URL de détail ;
+
+    destroy : appel en DELETE  sur l’URL de détail.
+"""
+class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
+
+    serializer_class = ProjectListSerializer
+    detail_serializer_class = ProjectSerializer
+
+    def get_queryset(self):
+        return Project.objects.all()
+
+    # Recupère le serializer complété pour ajouter l'id user
+    def perform_create(self, serializer):
+        serializer.save(author_user_id=self.request.user)
 
 class ProjectListCreate(APIView):
     """

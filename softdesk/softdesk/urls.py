@@ -1,3 +1,4 @@
+
 """
 URL configuration for softdesk project.
 
@@ -33,11 +34,12 @@ from api.views import (
     CommentListCreate,
     CommentDetailUpdateDelete
 )
-# # Ici nous créons notre routeur
-# router = routers.SimpleRouter()
-# # Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view
-# # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
-# router.register('issue', IssueViewset, basename='issue')
+from api.views import ProjectViewset
+# Ici nous créons notre routeur
+router = routers.SimpleRouter()
+# Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view
+# afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
+router.register('projects', ProjectViewset, basename='projects')
 
 
 urlpatterns = [
@@ -46,15 +48,15 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/user/', UserAPIView.as_view()),
-    path('api/projects/', ProjectListCreate.as_view()),
-    path('api/projects/<int:project_id>/', ProjectDetailUpdateDelete.as_view()),
-    path('api/projects/<int:project_id>/users/', ContributorListCreateDelete.as_view()),
-    path('api/projects/<int:project_id>/users/<int:user_id>', ContributorListCreateDelete.as_view()),
-    path('api/projects/<int:project_id>/issues/', IssueListCreate.as_view()),
-    path('api/projects/<int:project_id>/issues/<int:issue_id>', IssueUpdateDelete.as_view()),
-    path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/', CommentListCreate.as_view()),
-    path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
+    # path('api/user/', UserAPIView.as_view()),
+    # path('api/projects/', ProjectListCreate.as_view()),
+    # path('api/projects/<int:project_id>/', ProjectDetailUpdateDelete.as_view()),
+    # path('api/projects/<int:project_id>/users/', ContributorListCreateDelete.as_view()),
+    # path('api/projects/<int:project_id>/users/<int:user_id>', ContributorListCreateDelete.as_view()),
+    # path('api/projects/<int:project_id>/issues/', IssueListCreate.as_view()),
+    # path('api/projects/<int:project_id>/issues/<int:issue_id>', IssueUpdateDelete.as_view()),
+    # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/', CommentListCreate.as_view()),
+    # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
 
-    # path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
 ]

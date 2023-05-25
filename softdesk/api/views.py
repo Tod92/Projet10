@@ -4,8 +4,10 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.mixins import UpdateModelMixin
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
+
 
 from api.models import (
     Project,
@@ -61,6 +63,8 @@ class MultipleSerializerMixin:
             return self.detail_serializer_class
         if self.action == 'create' and self.detail_serializer_class is not None:
             return self.detail_serializer_class
+        if self.action == 'update' and self.detail_serializer_class is not None:
+            return self.detail_serializer_class
         return super().get_serializer_class()
 
 """
@@ -76,7 +80,7 @@ class MultipleSerializerMixin:
 
     destroy : appel en DELETE  sur l’URL de détail.
 """
-class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
+class ProjectViewset(ModelViewSet, MultipleSerializerMixin, UpdateModelMixin):
 
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
@@ -88,6 +92,7 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
 
+    
 class ProjectListCreate(APIView):
     """
     supports get and post

@@ -55,16 +55,20 @@ class IssueListSerializer(serializers.ModelSerializer):
         ]
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
+    title = serializers.CharField(required=False)
+    description = serializers.CharField(required=False)
+    type = serializers.CharField(required=False)
+
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type']
 
-    def update(self, instance, validated_data):
-        instance.title = validated_data.get('title', instance.title)
-        instance.description = validated_data.get('description', instance.description)
-        instance.type = validated_data.get('type', instance.type)
-        instance.save()
-        return instance
+    # def update(self, instance, validated_data):
+    #     instance.title = validated_data.get('title', instance.title)
+    #     instance.description = validated_data.get('description', instance.description)
+    #     instance.type = validated_data.get('type', instance.type)
+    #     instance.save()
+    #     return instance
 
 
 class ProjectListSerializer(serializers.ModelSerializer):

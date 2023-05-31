@@ -90,9 +90,16 @@ class ProjectViewset(ModelViewSet,
 
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
-    # permission_classes = [IsAuthor,]
+    permission_classes = [IsAuthenticated,]
+
     def get_queryset(self):
-        return Project.objects.filter(contributors=self.request.user)
+        # On filtre les projets auxquels l'utilisateur contribue
+        queryset = Project.objects.filter(contributors=self.request.user)
+        # si ajout dans la requete HTTP de ?type=
+        type = self.request.GET.get('type')
+        if type is not None:
+            queryset = queryset.filter(type=type)
+        return queryset
 
     # Recupère le serializer complété pour ajouter l'id user
     def perform_create(self, serializer):

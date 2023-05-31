@@ -4,7 +4,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_framework.mixins import UpdateModelMixin
+from rest_framework.mixins import UpdateModelMixin, ListModelMixin
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
 
@@ -52,47 +52,53 @@ class IsAuthor(BasePermission):
         # Instance must have an attribute named `owner`.
         return obj.author_user_id == request.user
 
-# Mixin dont les views devront hériter afin de viser un serializer different
-# pour le détail
+class IsContributor(BasePermission):
+    """
+    """
+    def has_object_permission(self, request, view, obj):
+        pass
+
+
 class MultipleSerializerMixin:
+    # Mixin dont les views devront hériter afin de viser un serializer different
+    # pour le détail
+    """
+    list : appel en GET  sur l’URL de liste ;
+    retrieve : appel en GET  sur l’URL de détail (qui comporte alors un identifiant) ;
+    create : appel en POST  sur l’URL de liste ;
+    update : appel en PUT  sur l’URL de détail ;
+    partial_update : appel en PATCH  sur l’URL de détail ;
+    destroy : appel en DELETE  sur l’URL de détail.
+    """
 
     detail_serializer_class = None
-
+    detail_actions = [
+        'retrieve',
+        'create',
+        'update'
+    ]
     def get_serializer_class(self):
-        if self.action == 'retrieve' and self.detail_serializer_class is not None:
+        if self.action in self.detail_actions and self.detail_serializer_class is not None:
             return self.detail_serializer_class
-        if self.action == 'create' and self.detail_serializer_class is not None:
-            return self.detail_serializer_class
-        if self.action == 'update' and self.detail_serializer_class is not None:
-            return self.detail_serializer_class
-        return super().get_serializer_class()
+        else:
+            return self.serializer_class
 
-"""
-    list : appel en GET  sur l’URL de liste ;
-
-    retrieve : appel en GET  sur l’URL de détail (qui comporte alors un identifiant) ;
-
-    create : appel en POST  sur l’URL de liste ;
-
-    update : appel en PUT  sur l’URL de détail ;
-
-    partial_update : appel en PATCH  sur l’URL de détail ;
-
-    destroy : appel en DELETE  sur l’URL de détail.
-"""
-class ProjectViewset(ModelViewSet, MultipleSerializerMixin, UpdateModelMixin):
+class ProjectViewset(ModelViewSet,
+                     MultipleSerializerMixin,
+                     UpdateModelMixin,
+                     ListModelMixin):
 
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
-
+    # permission_classes = [IsAuthor,]
     def get_queryset(self):
-        return Project.objects.all()
+        return Project.objects.filter(contributors=self.request.user)
 
     # Recupère le serializer complété pour ajouter l'id user
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
 
-    
+
 class ProjectListCreate(APIView):
     """
     supports get and post

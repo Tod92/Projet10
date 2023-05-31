@@ -71,7 +71,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     #     return instance
 
 
-class ProjectListSerializer(serializers.ModelSerializer):
+class ProjectListSerializer(serializers.HyperlinkedModelSerializer):
     # Nous redéfinissons l'attribut 'issues' qui porte le même nom que dans la liste des champs à afficher
     # en lui précisant un serializer paramétré à 'many=True' car les issues sont multiples pour une catégorie
     issues = IssueSerializer(many=True)

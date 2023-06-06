@@ -93,7 +93,8 @@ class ProjectViewset(ModelViewSet,
     permission_classes = [IsAuthenticated,]
 
     def get_queryset(self):
-        # On filtre les projets auxquels l'utilisateur contribue
+        # On filtre les projets auxquels l'utilisateur contribue dès la requete
+        # en base de donnée
         queryset = Project.objects.filter(contributors=self.request.user)
         # si ajout dans la requete HTTP de ?type=
         type = self.request.GET.get('type')
@@ -105,42 +106,42 @@ class ProjectViewset(ModelViewSet,
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
 
-
-class ProjectListCreate(APIView):
-    """
-    supports get and post
-    """
-    def get(self, request):
-        projects = Project.objects.all()
-        serializer = ProjectListSerializer(projects, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = ProjectSerializer(data=request.data)
-        # serializer.data.user_author_id = request.user
-        serializer.is_valid(raise_exception=True)
-        serializer.save(author_user_id=request.user)
-        return Response(serializer.data)
-
-class ProjectDetailUpdateDelete(APIView):
-    permission_classes = [IsAuthenticated&IsAuthor]
-
-    def get(self, request, project_id):
-        project = Project.objects.get(id=project_id)
-        serializer = ProjectSerializer(project)
-        return Response(serializer.data)
-
-    def put(self, request, project_id):
-        project = Project.objects.get(id=project_id)
-        serializer = ProjectSerializer(project, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def delete(self, request, project_id):
-        project = Project.objects.get(id=project_id)
-        project.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#
+# class ProjectListCreate(APIView):
+#     """
+#     supports get and post
+#     """
+#     def get(self, request):
+#         projects = Project.objects.all()
+#         serializer = ProjectListSerializer(projects, many=True)
+#         return Response(serializer.data)
+#
+#     def post(self, request):
+#         serializer = ProjectSerializer(data=request.data)
+#         # serializer.data.user_author_id = request.user
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(author_user_id=request.user)
+#         return Response(serializer.data)
+#
+# class ProjectDetailUpdateDelete(APIView):
+#     permission_classes = [IsAuthenticated&IsAuthor]
+#
+#     def get(self, request, project_id):
+#         project = Project.objects.get(id=project_id)
+#         serializer = ProjectSerializer(project)
+#         return Response(serializer.data)
+#
+#     def put(self, request, project_id):
+#         project = Project.objects.get(id=project_id)
+#         serializer = ProjectSerializer(project, data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data)
+#
+#     def delete(self, request, project_id):
+#         project = Project.objects.get(id=project_id)
+#         project.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class IssueListCreate(APIView):
     """

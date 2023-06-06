@@ -26,15 +26,13 @@ from rest_framework_simplejwt.views import (
 from api.views import (
     UserAPIView,
     RegisterView,
-    ProjectListCreate,
-    ProjectDetailUpdateDelete,
+    ProjectViewset,
     ContributorListCreateDelete,
     IssueListCreate,
     IssueUpdateDelete,
     CommentListCreate,
     CommentDetailUpdateDelete
 )
-from api.views import ProjectViewset
 # Ici nous créons notre routeur
 router = routers.SimpleRouter()
 # Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view

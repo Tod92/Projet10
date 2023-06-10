@@ -78,16 +78,16 @@ class MultipleSerializerMixin:
         'update'
     ]
     def get_serializer_class(self):
+        print('h2')
         if self.action in self.detail_actions and self.detail_serializer_class is not None:
             return self.detail_serializer_class
         else:
             return self.serializer_class
 
-class ProjectViewset(ModelViewSet,
-                     MultipleSerializerMixin,
-                     UpdateModelMixin,
-                     ListModelMixin):
-
+class ProjectViewset(MultipleSerializerMixin,
+                     ModelViewSet):
+                     # UpdateModelMixin,
+                     # ListModelMixin):
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated,]
@@ -102,7 +102,6 @@ class ProjectViewset(ModelViewSet,
             queryset = queryset.filter(type=type)
         return queryset
 
-    # Recupère le serializer complété pour ajouter l'id user
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
 

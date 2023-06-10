@@ -56,14 +56,6 @@ class IssueListSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
-    """
-    TODO : rollback les champs requiered et préciser dans la doc d'envoyer les
-    3 elements systèmatiquement
-    """
-    title = serializers.CharField(required=False)
-    description = serializers.CharField(required=False)
-    type = serializers.CharField(required=False)
-
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type']

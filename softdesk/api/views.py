@@ -91,6 +91,8 @@ class ProjectViewset(MultipleSerializerMixin,
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated,]
+    # Pas de methode PATCH
+    http_method_names = ['get','post','put','delete']
 
     def get_queryset(self):
         # On filtre les projets auxquels l'utilisateur contribue dès la requete
@@ -104,6 +106,23 @@ class ProjectViewset(MultipleSerializerMixin,
 
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
+
+
+class IssueViewset(MultipleSerializerMixin,
+                     ModelViewSet):
+
+    serializer_class = IssueListSerializer
+    detail_serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated,]
+    # Pas de methode PATCH
+    http_method_names = ['get','post','put','delete']
+
+    queryset = Issue.objects.all()
+
+    def get_queryset(self, *args, **kwargs):
+        project_id = self.kwargs.get("project_pk")
+        return Issue.objects.filter(project_id=project_id)
+
 
 #
 # class ProjectListCreate(APIView):
@@ -142,39 +161,39 @@ class ProjectViewset(MultipleSerializerMixin,
 #         project.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class IssueListCreate(APIView):
-    """
-    supports get and post
-    """
-    def get(self, request, project_id):
-        issues = Issue.objects.filter(project_id=project_id)
-        serializer = IssueListSerializer(issues, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, project_id):
-        project = Project.objects.get(id=project_id)
-        serializer = IssueSerializer(data=request.data)
-        # serializer.data.user_author_id = request.user
-        serializer.is_valid(raise_exception=True)
-        serializer.save(
-            author_user_id=request.user,
-            project_id=project)
-        return Response(serializer.data)
-
-class IssueUpdateDelete(APIView):
-    permission_classes = [IsAuthenticated&IsAuthor]
-
-    def put(self, request, project_id, issue_id):
-        issue = Issue.objects.get(id=issue_id)
-        serializer = IssueSerializer(issue, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def delete(self, request, project_id, issue_id):
-        issue = Issue.objects.get(id=issue_id)
-        issue.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+# class IssueListCreate(APIView):
+#     """
+#     supports get and post
+#     """
+#     def get(self, request, project_id):
+#         issues = Issue.objects.filter(project_id=project_id)
+#         serializer = IssueListSerializer(issues, many=True)
+#         return Response(serializer.data)
+#
+#     def post(self, request, project_id):
+#         project = Project.objects.get(id=project_id)
+#         serializer = IssueSerializer(data=request.data)
+#         # serializer.data.user_author_id = request.user
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(
+#             author_user_id=request.user,
+#             project_id=project)
+#         return Response(serializer.data)
+#
+# class IssueUpdateDelete(APIView):
+#     permission_classes = [IsAuthenticated&IsAuthor]
+#
+#     def put(self, request, project_id, issue_id):
+#         issue = Issue.objects.get(id=issue_id)
+#         serializer = IssueSerializer(issue, data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data)
+#
+#     def delete(self, request, project_id, issue_id):
+#         issue = Issue.objects.get(id=issue_id)
+#         issue.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class CommentListCreate(APIView):
     """
@@ -247,7 +266,7 @@ class RegisterView(APIView):
 
 class UserAPIView(APIView):
     """
-    test docstring
+    test docstring (affichage sur la page web de l'api)
     """
     def get(self, *args, **kwargs):
         users = User.objects.all()

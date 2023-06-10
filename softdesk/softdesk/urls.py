@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from rest_framework import routers
+from rest_framework_nested import routers
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -27,9 +27,8 @@ from api.views import (
     UserAPIView,
     RegisterView,
     ProjectViewset,
+    IssueViewset,
     ContributorListCreateDelete,
-    IssueListCreate,
-    IssueUpdateDelete,
     CommentListCreate,
     CommentDetailUpdateDelete
 )
@@ -39,6 +38,16 @@ router = routers.SimpleRouter()
 # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
 router.register('projects', ProjectViewset, basename='projects')
 
+issue_router = routers.NestedSimpleRouter(
+    router,
+    r'projects',
+    lookup='project')
+
+issue_router.register(
+    r'issues',
+    IssueViewset,
+    basename='project-issue'
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -56,5 +65,7 @@ urlpatterns = [
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/', CommentListCreate.as_view()),
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
 
-    path('api/', include(router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(issue_router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+
 ]

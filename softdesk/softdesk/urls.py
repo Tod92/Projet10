@@ -28,9 +28,8 @@ from api.views import (
     RegisterView,
     ProjectViewset,
     IssueViewset,
+    CommentViewset,
     ContributorListCreateDelete,
-    CommentListCreate,
-    CommentDetailUpdateDelete
 )
 # Ici nous créons notre routeur
 router = routers.SimpleRouter()
@@ -38,15 +37,29 @@ router = routers.SimpleRouter()
 # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
 router.register('projects', ProjectViewset, basename='projects')
 
+# Nested routers
 issue_router = routers.NestedSimpleRouter(
     router,
     r'projects',
-    lookup='project')
+    lookup='project'
+)
 
 issue_router.register(
     r'issues',
     IssueViewset,
     basename='project-issue'
+)
+
+comment_router = routers.NestedSimpleRouter(
+    issue_router,
+    r'issues',
+    lookup='issue'
+)
+
+comment_router.register(
+    r'comments',
+    CommentViewset,
+    basename='issue-comment'
 )
 
 urlpatterns = [
@@ -66,6 +79,6 @@ urlpatterns = [
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
 
     path('api/', include(router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
-    path('api/', include(issue_router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
-
+    path('api/', include(issue_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(comment_router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
 ]

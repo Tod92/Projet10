@@ -78,7 +78,6 @@ class MultipleSerializerMixin:
         'update'
     ]
     def get_serializer_class(self):
-        print('h2')
         if self.action in self.detail_actions and self.detail_serializer_class is not None:
             return self.detail_serializer_class
         else:
@@ -123,6 +122,32 @@ class IssueViewset(MultipleSerializerMixin,
         project_id = self.kwargs.get("project_pk")
         return Issue.objects.filter(project_id=project_id)
 
+    def perform_create(self, serializer):
+        project_id = self.kwargs.get("project_pk")
+        project = Project.objects.get(id=project_id)
+        serializer.save(author_user_id=self.request.user,
+                        project_id=project)
+
+class CommentViewset(MultipleSerializerMixin,
+                     ModelViewSet):
+
+    serializer_class = CommentListSerializer
+    detail_serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated,]
+    # Pas de methode PATCH
+    http_method_names = ['get','post','put','delete']
+
+    queryset = Comment.objects.all()
+
+    def get_queryset(self, *args, **kwargs):
+        issue_id = self.kwargs.get("issue_pk")
+        return Comment.objects.filter(issue_id=issue_id)
+
+    def perform_create(self, serializer):
+        issue_id = self.kwargs.get("issue_pk")
+        issue = Issue.objects.get(id=issue_id)
+        serializer.save(author_user_id=self.request.user,
+                        issue_id=issue)
 
 #
 # class ProjectListCreate(APIView):
@@ -194,45 +219,45 @@ class IssueViewset(MultipleSerializerMixin,
 #         issue = Issue.objects.get(id=issue_id)
 #         issue.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
-
-class CommentListCreate(APIView):
-    """
-    supports get and post
-    """
-    def get(self, request, project_id, issue_id):
-        comments = Comment.objects.filter(issue_id=issue_id)
-        serializer = CommentListSerializer(comments, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, project_id, issue_id):
-        issue = Issue.objects.get(id=issue_id)
-        serializer = CommentSerializer(data=request.data)
-        # serializer.data.user_author_id = request.user
-        serializer.is_valid(raise_exception=True)
-        serializer.save(
-            author_user_id=request.user,
-            issue_id=issue)
-        return Response(serializer.data)
-
-class CommentDetailUpdateDelete(APIView):
-    permission_classes = [IsAuthenticated&IsAuthor]
-
-    def get(self, request, project_id, issue_id, comment_id):
-        comment = Comment.objects.get(id=comment_id)
-        serializer = CommentListSerializer(comment)
-        return Response(serializer.data)
-
-    def put(self, request, project_id, issue_id, comment_id):
-        comment = Comment.objects.get(id=comment_id)
-        serializer = CommentSerializer(comment, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def delete(self, request, project_id, issue_id, comment_id):
-        comment = Comment.objects.get(id=comment_id)
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#
+# class CommentListCreate(APIView):
+#     """
+#     supports get and post
+#     """
+#     def get(self, request, project_id, issue_id):
+#         comments = Comment.objects.filter(issue_id=issue_id)
+#         serializer = CommentListSerializer(comments, many=True)
+#         return Response(serializer.data)
+#
+#     def post(self, request, project_id, issue_id):
+#         issue = Issue.objects.get(id=issue_id)
+#         serializer = CommentSerializer(data=request.data)
+#         # serializer.data.user_author_id = request.user
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(
+#             author_user_id=request.user,
+#             issue_id=issue)
+#         return Response(serializer.data)
+#
+# class CommentDetailUpdateDelete(APIView):
+#     permission_classes = [IsAuthenticated&IsAuthor]
+#
+#     def get(self, request, project_id, issue_id, comment_id):
+#         comment = Comment.objects.get(id=comment_id)
+#         serializer = CommentListSerializer(comment)
+#         return Response(serializer.data)
+#
+#     def put(self, request, project_id, issue_id, comment_id):
+#         comment = Comment.objects.get(id=comment_id)
+#         serializer = CommentSerializer(comment, data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data)
+#
+#     def delete(self, request, project_id, issue_id, comment_id):
+#         comment = Comment.objects.get(id=comment_id)
+#         comment.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class ContributorListCreateDelete(APIView):
     def get(self, request, project_id):

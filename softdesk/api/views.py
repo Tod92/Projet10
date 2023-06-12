@@ -83,6 +83,25 @@ class MultipleSerializerMixin:
         else:
             return self.serializer_class
 
+
+class RegisterView(APIView):
+    permission_classes = []
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+class UserAPIView(APIView):
+    """
+    test docstring (affichage sur la page web de l'api)
+    """
+    def get(self, *args, **kwargs):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+
 class ProjectViewset(MultipleSerializerMixin,
                      ModelViewSet):
                      # UpdateModelMixin,
@@ -148,6 +167,25 @@ class CommentViewset(MultipleSerializerMixin,
         issue = Issue.objects.get(id=issue_id)
         serializer.save(author_user_id=self.request.user,
                         issue_id=issue)
+
+class ContributorViewset(MultipleSerializerMixin,
+                        ModelViewSet):
+
+    serializer_class = ContributorSerializer
+    permission_classes = [IsAuthenticated,]
+    # Pas de methode PATCH
+    http_method_names = ['get','post','put','delete']
+
+    queryset = Contributor.objects.all()
+
+    def get_queryset(self, *args, **kwargs):
+        project_id = self.kwargs.get("project_pk")
+        return Contributor.objects.filter(project_id=project_id)
+
+    def perform_create(self, serializer):
+        project_id = self.kwargs.get("project_pk")
+        project = Project.objects.get(id=project_id)
+        serializer.save(project_id=project)
 
 #
 # class ProjectListCreate(APIView):
@@ -259,44 +297,28 @@ class CommentViewset(MultipleSerializerMixin,
 #         comment.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class ContributorListCreateDelete(APIView):
-    def get(self, request, project_id):
-        contributors = Contributor.objects.filter(project_id=project_id)
-        serializer = ContributorSerializer(contributors, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, project_id):
-        project = Project.objects.get(id=project_id)
-        serializer = ContributorSerializer(data=request.data)
-        # serializer.data.user_author_id = request.user
-        serializer.is_valid(raise_exception=True)
-        serializer.save(project_id=project)
-        return Response(serializer.data)
-
-    def delete(self, request, project_id, user_id):
-        contributor = Contributor.objects.filter(
-            project_id=project_id,
-            user_id=user_id
-        )
-        contributor.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-class RegisterView(APIView):
-    permission_classes = []
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-class UserAPIView(APIView):
-    """
-    test docstring (affichage sur la page web de l'api)
-    """
-    def get(self, *args, **kwargs):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+# class ContributorListCreateDelete(APIView):
+#     def get(self, request, project_id):
+#         contributors = Contributor.objects.filter(project_id=project_id)
+#         serializer = ContributorSerializer(contributors, many=True)
+#         return Response(serializer.data)
+#
+#     def post(self, request, project_id):
+#         project = Project.objects.get(id=project_id)
+#         serializer = ContributorSerializer(data=request.data)
+#         # serializer.data.user_author_id = request.user
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(project_id=project)
+#         return Response(serializer.data)
+#
+#     def delete(self, request, project_id, user_id):
+#         contributor = Contributor.objects.filter(
+#             project_id=project_id,
+#             user_id=user_id
+#         )
+#         contributor.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+#
 
 
 # class IssueViewset(ModelViewSet):

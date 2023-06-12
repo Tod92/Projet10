@@ -29,17 +29,17 @@ from api.views import (
     ProjectViewset,
     IssueViewset,
     CommentViewset,
-    ContributorListCreateDelete,
+    ContributorViewset
 )
 # Ici nous créons notre routeur
-router = routers.SimpleRouter()
+project_router = routers.SimpleRouter()
 # Puis lui déclarons une url basée sur le mot clé ‘category’ et notre view
 # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
-router.register('projects', ProjectViewset, basename='projects')
+project_router.register('projects', ProjectViewset, basename='projects')
 
 # Nested routers
 issue_router = routers.NestedSimpleRouter(
-    router,
+    project_router,
     r'projects',
     lookup='project'
 )
@@ -62,6 +62,19 @@ comment_router.register(
     basename='issue-comment'
 )
 
+contributor_router = routers.NestedSimpleRouter(
+    project_router,
+    r'projects',
+    lookup='project'
+)
+
+contributor_router.register(
+    r'users',
+    ContributorViewset,
+    basename='project-contributor'
+)
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/signup/', RegisterView.as_view(), name="sign_up"),
@@ -78,7 +91,9 @@ urlpatterns = [
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/', CommentListCreate.as_view()),
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
 
-    path('api/', include(router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(project_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
     path('api/', include(issue_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
-    path('api/', include(comment_router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(comment_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(contributor_router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+
 ]

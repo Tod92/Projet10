@@ -9,8 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "username","password"]
 
     def create(self, validated_data):
-        user = User.objects.create(username=validated_data['username']
-                                   )
+        user = User.objects.create(username=validated_data['username'])
         user.set_password(validated_data['password'])
         user.save()
         return user
@@ -18,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username","email"]
+        fields = ["id","username","email"]
 
 class IssueSerializer(serializers.ModelSerializer):
 
@@ -26,15 +25,15 @@ class IssueSerializer(serializers.ModelSerializer):
         model = Issue
         fields = ['id', 'title', 'description', 'tag', 'priority', 'status']
 
-    def update(self, instance, validated_data):
-        instance.title = validated_data.get('title', instance.title)
-        instance.description = validated_data.get('description', instance.description)
-        instance.tag = validated_data.get('tag', instance.tag)
-        instance.priority = validated_data.get('priority', instance.priority)
-        instance.status = validated_data.get('status', instance.status)
-
-        instance.save()
-        return instance
+    # def update(self, instance, validated_data):
+    #     instance.title = validated_data.get('title', instance.title)
+    #     instance.description = validated_data.get('description', instance.description)
+    #     instance.tag = validated_data.get('tag', instance.tag)
+    #     instance.priority = validated_data.get('priority', instance.priority)
+    #     instance.status = validated_data.get('status', instance.status)
+    #
+    #     instance.save()
+    #     return instance
 
 
 class IssueListSerializer(serializers.ModelSerializer):
@@ -100,8 +99,7 @@ class CommentListSerializer(serializers.ModelSerializer):
         ]
 
 class ContributorSerializer(serializers.ModelSerializer):
-    # Nous redéfinissons l'attribut 'product' qui porte le même nom que dans la liste des champs à afficher
-    # en lui précisant un serializer paramétré à 'many=True' car les produits sont multiples pour une catégorie
+    user_id = UserListSerializer()
     class Meta:
         model = Contributor
         fields = ['user_id']

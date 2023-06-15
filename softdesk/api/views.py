@@ -1,6 +1,5 @@
 from django.shortcuts import render
-
-# Create your views here.
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -18,9 +17,9 @@ from api.models import (
 )
 
 from api.serializers import (
+    UserSerializer,
     ProjectSerializer,
     ProjectListSerializer,
-    UserSerializer,
     IssueSerializer,
     IssueListSerializer,
     CommentSerializer,
@@ -57,6 +56,26 @@ class IsContributor(BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         pass
+
+
+class CallableProjectPermission(BasePermission):
+    """
+    Permission instanciable afin de lui communiquer l'objet project
+    """
+    def __call__(self):
+        return self
+
+    def __init__(self, project):
+        self.project = project
+
+    def has_permission(self, request, view):
+        is_author = request.user == self.project.author_user_id
+        print('is_author : ', is_author)
+        is_contributor = Contributor.objects.filter(user_id=request.user,
+                                                 project_id=self.project).exists()
+        print('is_contributor : ', is_contributor)
+
+        return (is_author or is_contributor)
 
 
 class MultipleSerializerMixin:
@@ -104,8 +123,7 @@ class UserAPIView(APIView):
 
 class ProjectViewset(MultipleSerializerMixin,
                      ModelViewSet):
-                     # UpdateModelMixin,
-                     # ListModelMixin):
+
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated,]
@@ -113,9 +131,10 @@ class ProjectViewset(MultipleSerializerMixin,
     http_method_names = ['get','post','put','delete']
 
     def get_queryset(self):
-        # On filtre les projets auxquels l'utilisateur contribue dès la requete
-        # en base de donnée
-        queryset = Project.objects.filter(contributors=self.request.user)
+        # On filtre les projets auxquels l'utilisateur contribue ou dont il
+        # est l'auteur dès la requete en base de donnée
+        user = self.request.user
+        queryset = Project.objects.filter(Q(contributors=user)|Q(author_user_id=user))
         # si ajout dans la requete HTTP de ?type=
         type = self.request.GET.get('type')
         if type is not None:
@@ -131,21 +150,31 @@ class IssueViewset(MultipleSerializerMixin,
 
     serializer_class = IssueListSerializer
     detail_serializer_class = IssueSerializer
-    permission_classes = [IsAuthenticated,]
-    # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
+    # Pas de methode PATCH
 
     queryset = Issue.objects.all()
 
+    def get_permissions(self):
+        """
+        Surcharge de la fonction afin de verifier les droits sur le projet
+        auquel est lié le problème (Issue)
+        """
+        project_id = self.kwargs.get("project_pk")
+        self.project = Project.objects.get(id=project_id)
+        print('je suis ici')
+        return [IsAuthenticated(), CallableProjectPermission(project=self.project)]
+
     def get_queryset(self, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")
+        self.project = Project.objects.get(id=project_id)
         return Issue.objects.filter(project_id=project_id)
 
     def perform_create(self, serializer):
         project_id = self.kwargs.get("project_pk")
         project = Project.objects.get(id=project_id)
         serializer.save(author_user_id=self.request.user,
-                        project_id=project)
+                        project_id=self.project)
 
 class CommentViewset(MultipleSerializerMixin,
                      ModelViewSet):

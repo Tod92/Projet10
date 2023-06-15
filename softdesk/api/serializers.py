@@ -82,10 +82,10 @@ class CommentSerializer(serializers.HyperlinkedModelSerializer):
         model = Comment
         fields = ['id', 'description']
 
-    def update(self, instance, validated_data):
-        instance.description = validated_data.get('description', instance.description)
-        instance.save()
-        return instance
+    # def update(self, instance, validated_data):
+    #     instance.description = validated_data.get('description', instance.description)
+    #     instance.save()
+    #     return instance
 
 class CommentListSerializer(serializers.ModelSerializer):
     author_user_id = UserListSerializer()

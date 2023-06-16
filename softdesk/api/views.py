@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -46,21 +47,27 @@ class IsAuthor(BasePermission):
     Object-level permission to only allow owners of an object to edit it.
     Assumes the model instance has an `author_user_id` attribute.
     """
-
     def has_object_permission(self, request, view, obj):
-        # Instance must have an attribute named `owner`.
+        print('checking if user is author of project')
+        result = obj.author_user_id == request.user
+        print(result)
         return obj.author_user_id == request.user
 
 class IsContributor(BasePermission):
     """
+    Permission a utiliser pour les objets Project
     """
     def has_object_permission(self, request, view, obj):
-        pass
+        print('checking if user is contributor of project')
+        result = request.user in obj.contributors.all()
+        print(result)
+        return result
 
 
-class CallableProjectPermission(BasePermission):
+class CustomIsProjectAuthorOrContrib(BasePermission):
     """
-    Permission instanciable afin de lui communiquer l'objet project
+    Permission instanciable afin de lui communiquer l'objet Project
+    Renvoie True si l'utilisateur auth est auteur ou contributeur
     """
     def __call__(self):
         return self
@@ -126,15 +133,18 @@ class ProjectViewset(MultipleSerializerMixin,
 
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated,IsAuthor|IsContributor]
     # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
 
     def get_queryset(self):
-        # On filtre les projets auxquels l'utilisateur contribue ou dont il
-        # est l'auteur dès la requete en base de donnée
         user = self.request.user
-        queryset = Project.objects.filter(Q(contributors=user)|Q(author_user_id=user))
+        # On affiche uniquement les projets dont l'utilisateur est contributeur
+        # ou auteur
+        if self.action == 'list'and user.is_staff is False:
+            queryset = Project.objects.filter(Q(contributors=user)|Q(author_user_id=user))
+        else:
+            queryset = Project.objects.all()
         # si ajout dans la requete HTTP de ?type=
         type = self.request.GET.get('type')
         if type is not None:
@@ -158,21 +168,17 @@ class IssueViewset(MultipleSerializerMixin,
     def get_permissions(self):
         """
         Surcharge de la fonction afin de verifier les droits sur le projet
-        auquel est lié le problème (Issue)
+        auquel est lié l'Issue
         """
-        project_id = self.kwargs.get("project_pk")
-        self.project = Project.objects.get(id=project_id)
-        print('je suis ici')
-        return [IsAuthenticated(), CallableProjectPermission(project=self.project)]
+        self.project_id = self.kwargs.get("project_pk")
+        self.project = get_object_or_404(Project, pk=self.project_id)
+
+        return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 
     def get_queryset(self, *args, **kwargs):
-        project_id = self.kwargs.get("project_pk")
-        self.project = Project.objects.get(id=project_id)
-        return Issue.objects.filter(project_id=project_id)
+        return Issue.objects.filter(project_id=self.project_id)
 
     def perform_create(self, serializer):
-        project_id = self.kwargs.get("project_pk")
-        project = Project.objects.get(id=project_id)
         serializer.save(author_user_id=self.request.user,
                         project_id=self.project)
 
@@ -181,11 +187,21 @@ class CommentViewset(MultipleSerializerMixin,
 
     serializer_class = CommentListSerializer
     detail_serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated,IsAuthor]
     # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
 
     queryset = Comment.objects.all()
+
+    def get_permissions(self):
+        """
+        Surcharge de la fonction afin de verifier les droits sur le projet
+        auquel est lié le commentaire
+        """
+        self.project_id = self.kwargs.get("project_pk")
+        self.project = get_object_or_404(Project, pk=self.project_id)
+
+        return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 
     def get_queryset(self, *args, **kwargs):
         issue_id = self.kwargs.get("issue_pk")
@@ -198,7 +214,7 @@ class CommentViewset(MultipleSerializerMixin,
                         issue_id=issue)
 
 class ContributorViewset(MultipleSerializerMixin,
-                        ModelViewSet):
+                         ModelViewSet):
 
     serializer_class = ContributorSerializer
     permission_classes = [IsAuthenticated,]

@@ -1,14 +1,18 @@
 from django.shortcuts import render
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+# from rest_framework.decorators import permission_classes
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_framework.mixins import UpdateModelMixin, ListModelMixin
 from rest_framework.response import Response
-from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
 
-
+from api.permissions import (
+    IsAuthenticated,
+    IsAuthor,
+    IsContributor,
+    CustomIsProjectAuthorOrContrib
+)
 from api.models import (
     Project,
     User,
@@ -25,70 +29,17 @@ from api.serializers import (
     IssueListSerializer,
     CommentSerializer,
     CommentListSerializer,
-    ContributorSerializer
+    ContributorSerializer,
+    ContributorListSerializer
 )
 
-class IsAuthorOrReadOnly(BasePermission):
-    """
-    Object-level permission to only allow owners of an object to edit it.
-    Assumes the model instance has an `author_user_id` attribute.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        if request.method in SAFE_METHODS:
-            return True
-
-        return obj.author_user_id == request.user
-
-class IsAuthor(BasePermission):
-    """
-    Object-level permission to only allow owners of an object to edit it.
-    Assumes the model instance has an `author_user_id` attribute.
-    """
-    def has_object_permission(self, request, view, obj):
-        print('checking if user is author of project')
-        result = obj.author_user_id == request.user
-        print(result)
-        return obj.author_user_id == request.user
-
-class IsContributor(BasePermission):
-    """
-    Permission a utiliser pour les objets Project
-    """
-    def has_object_permission(self, request, view, obj):
-        print('checking if user is contributor of project')
-        result = request.user in obj.contributors.all()
-        print(result)
-        return result
-
-
-class CustomIsProjectAuthorOrContrib(BasePermission):
-    """
-    Permission instanciable afin de lui communiquer l'objet Project
-    Renvoie True si l'utilisateur auth est auteur ou contributeur
-    """
-    def __call__(self):
-        return self
-
-    def __init__(self, project):
-        self.project = project
-
-    def has_permission(self, request, view):
-        is_author = request.user == self.project.author_user_id
-        print('is_author : ', is_author)
-        is_contributor = Contributor.objects.filter(user_id=request.user,
-                                                 project_id=self.project).exists()
-        print('is_contributor : ', is_contributor)
-
-        return (is_author or is_contributor)
 
 
 class MultipleSerializerMixin:
     # Mixin dont les views devront hériter afin de viser un serializer different
     # pour le détail
     """
+    actions :
     list : appel en GET  sur l’URL de liste ;
     retrieve : appel en GET  sur l’URL de détail (qui comporte alors un identifiant) ;
     create : appel en POST  sur l’URL de liste ;
@@ -136,6 +87,13 @@ class ProjectViewset(MultipleSerializerMixin,
     permission_classes = [IsAuthenticated,IsAuthor|IsContributor]
     # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
+    def get_permissions(self):
+        print(self.action)
+        if self.action in ['destroy', 'update']:
+            self.permission_classes = [IsAuthor,]
+
+        return super(ProjectViewset, self).get_permissions()
+
 
     def get_queryset(self):
         user = self.request.user
@@ -156,7 +114,7 @@ class ProjectViewset(MultipleSerializerMixin,
 
 
 class IssueViewset(MultipleSerializerMixin,
-                     ModelViewSet):
+                   ModelViewSet):
 
     serializer_class = IssueListSerializer
     detail_serializer_class = IssueSerializer
@@ -216,12 +174,22 @@ class CommentViewset(MultipleSerializerMixin,
 class ContributorViewset(MultipleSerializerMixin,
                          ModelViewSet):
 
-    serializer_class = ContributorSerializer
-    permission_classes = [IsAuthenticated,]
-    # Pas de methode PATCH
-    http_method_names = ['get','post','put','delete']
+    serializer_class = ContributorListSerializer
+    detail_serializer_class = ContributorSerializer
+    # permission_classes = [IsAuthenticated,]
+    # Pas de methode PATCH ni PUT
+    http_method_names = ['get','post','delete']
 
     queryset = Contributor.objects.all()
+
+    def get_permissions(self):
+        """
+        Surcharge de la fonction afin de verifier les droits sur le projet
+        auquel est lié le commentaire
+        """
+        self.project_id = self.kwargs.get("project_pk")
+        self.project = get_object_or_404(Project, pk=self.project_id)
+        return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 
     def get_queryset(self, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")

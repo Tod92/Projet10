@@ -99,7 +99,12 @@ class CommentListSerializer(serializers.ModelSerializer):
         ]
 
 class ContributorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contributor
+        fields = ['id','user_id','project_id']
+
+class ContributorListSerializer(serializers.ModelSerializer):
     user_id = UserListSerializer()
     class Meta:
         model = Contributor
-        fields = ['user_id']
+        fields = ['id','user_id','project_id']

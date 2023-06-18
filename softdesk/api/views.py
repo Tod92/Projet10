@@ -88,9 +88,9 @@ class ProjectViewset(MultipleSerializerMixin,
     # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
     def get_permissions(self):
-        print(self.action)
+        print('action demandée : ', self.action)
         if self.action in ['destroy', 'update']:
-            self.permission_classes = [IsAuthor,]
+            self.permission_classes = [IsAuthenticated,IsAuthor]
 
         return super(ProjectViewset, self).get_permissions()
 
@@ -103,7 +103,7 @@ class ProjectViewset(MultipleSerializerMixin,
             queryset = Project.objects.filter(Q(contributors=user)|Q(author_user_id=user))
         else:
             queryset = Project.objects.all()
-        # si ajout dans la requete HTTP de ?type=
+        # Si ajout dans la requete HTTP de ?type=
         type = self.request.GET.get('type')
         if type is not None:
             queryset = queryset.filter(type=type)
@@ -118,18 +118,19 @@ class IssueViewset(MultipleSerializerMixin,
 
     serializer_class = IssueListSerializer
     detail_serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated,]
     http_method_names = ['get','post','put','delete']
     # Pas de methode PATCH
 
     queryset = Issue.objects.all()
 
     def get_permissions(self):
-        """
-        Surcharge de la fonction afin de verifier les droits sur le projet
-        auquel est lié l'Issue
-        """
+        print('action demandée : ', self.action)
+        # Verification des droits sur le projet
         self.project_id = self.kwargs.get("project_pk")
         self.project = get_object_or_404(Project, pk=self.project_id)
+        if self.action in ['destroy', 'update']:
+            return [IsAuthenticated(),IsAuthor()]
 
         return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 
@@ -156,8 +157,11 @@ class CommentViewset(MultipleSerializerMixin,
         Surcharge de la fonction afin de verifier les droits sur le projet
         auquel est lié le commentaire
         """
+        print(self.action)
         self.project_id = self.kwargs.get("project_pk")
         self.project = get_object_or_404(Project, pk=self.project_id)
+        if self.action in ['destroy', 'update']:
+                return [IsAuthenticated(),IsAuthor()]
 
         return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 

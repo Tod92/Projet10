@@ -24,12 +24,12 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from api.views import (
-    UserAPIView,
     RegisterView,
     ProjectViewset,
     IssueViewset,
     CommentViewset,
-    ContributorViewset
+    ContributorViewset,
+    ReplaceUserView
 )
 # Ici nous créons notre routeur
 project_router = routers.SimpleRouter()
@@ -77,6 +77,7 @@ contributor_router.register(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('rgpd/<int:user_id>', ReplaceUserView.as_view(), name="replace-user"),
     path('api/signup/', RegisterView.as_view(), name="sign_up"),
     path('api-auth/', include('rest_framework.urls')),
     path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -91,9 +92,10 @@ urlpatterns = [
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/', CommentListCreate.as_view()),
     # path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:comment_id>', CommentDetailUpdateDelete.as_view())
 
-    path('api/', include(project_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
-    path('api/', include(issue_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
-    path('api/', include(comment_router.urls)),  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
-    path('api/', include(contributor_router.urls))  # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    # Il faut bien penser à ajouter les urls du router dans la liste des urls disponibles.
+    path('api/', include(project_router.urls)),
+    path('api/', include(issue_router.urls)),
+    path('api/', include(comment_router.urls)),
+    path('api/', include(contributor_router.urls))
 
 ]

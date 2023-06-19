@@ -70,6 +70,7 @@ password : BartEstNul
 
 ## fonctionnalités :
 
+Voir documentation API
 
 ## Historique
 

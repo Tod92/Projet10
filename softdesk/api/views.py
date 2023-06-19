@@ -37,10 +37,10 @@ from api.serializers import (
 )
 
 
-
+# Mixin dont les views devront hériter afin de viser un serializer different
+# pour le détail
 class MultipleSerializerMixin:
-    # Mixin dont les views devront hériter afin de viser un serializer different
-    # pour le détail
+
     """
     actions :
     list : appel en GET  sur l’URL de liste ;
@@ -70,15 +70,6 @@ class RegisterView(APIView):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
-
-class UserAPIView(APIView):
-    """
-    test docstring (affichage sur la page web de l'api)
-    """
-    def get(self, *args, **kwargs):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
 
@@ -123,7 +114,6 @@ class IssueViewset(MultipleSerializerMixin,
     throttle_classes = [UserRateThrottle]
     # permission_classes = [IsAuthenticated,]
     http_method_names = ['get','post','put','delete']
-    # Pas de methode PATCH
 
     queryset = Issue.objects.all()
 
@@ -142,6 +132,7 @@ class IssueViewset(MultipleSerializerMixin,
 
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user,
+                        assignee_user_id=self.request.user,
                         project_id=self.project)
 
 class CommentViewset(MultipleSerializerMixin,
@@ -202,8 +193,8 @@ class ContributorViewset(MultipleSerializerMixin,
         return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 
     def get_queryset(self, *args, **kwargs):
-        project_id = self.kwargs.get("project_pk")
-        return Contributor.objects.filter(project_id=project_id)
+        # project_id = self.kwargs.get("project_pk")
+        return Contributor.objects.filter(project_id=self.project_id)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -211,11 +202,29 @@ class ContributorViewset(MultipleSerializerMixin,
         try :
             self.perform_create(serializer) # Calls serializer.save()
         except IntegrityError:
-            print('ici')
             return Response({"Error": "this user is already a contributor for this project" }, status=status.HTTP_400_BAD_REQUEST)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
+class ReplaceUserView(APIView):
+    """
+    Vue pour faire disparaitre toute trace d'un utilisateur suite à demande rgpd
+
+    """
+
+    def post(self, request, user_id):
+        if request.user.is_staff != True:
+            print('nope')
+            return None
+        user = User.objects.get(id=user_id)
+        projects = Project.objects.filter(author_user_id=user_id)
+
+        issues = Issue.objects.filter(author_user_id=user_id)
+        # TODO : assignee
+        comments = Comment.objects.filter(author_user_id=user_id)
+
+        #return Response(status=status.HTTP_200_OK)
 
 
 
@@ -229,6 +238,19 @@ class ContributorViewset(MultipleSerializerMixin,
 #             print('ici')
 #             Response({"Fail": "blablal" }, status=status.HTTP_400_BAD_REQUEST)
 # #
+
+# class UserAPIView(APIView):
+#     """
+#     test docstring (affichage sur la page web de l'api)
+#     """
+#     def get(self, *args, **kwargs):
+#         users = User.objects.all()
+#         serializer = UserSerializer(users, many=True)
+#         return Response(serializer.data)
+#
+
+
+
 # class ProjectListCreate(APIView):
 #     """
 #     supports get and post

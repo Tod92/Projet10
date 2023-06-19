@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 # from rest_framework.decorators import permission_classes
-from rest_framework import status
+# from rest_framework import status
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ from api.permissions import (
     IsContributor,
     CustomIsProjectAuthorOrContrib
 )
+
 from api.models import (
     Project,
     User,
@@ -84,15 +86,14 @@ class ProjectViewset(MultipleSerializerMixin,
 
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectSerializer
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated,IsAuthor|IsContributor]
     # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
     def get_permissions(self):
-        print('action demandée : ', self.action)
         if self.action in ['destroy', 'update']:
             self.permission_classes = [IsAuthenticated,IsAuthor]
-
-        return super(ProjectViewset, self).get_permissions()
+        return super().get_permissions()
 
 
     def get_queryset(self):
@@ -118,7 +119,8 @@ class IssueViewset(MultipleSerializerMixin,
 
     serializer_class = IssueListSerializer
     detail_serializer_class = IssueSerializer
-    permission_classes = [IsAuthenticated,]
+    throttle_classes = [UserRateThrottle]
+    # permission_classes = [IsAuthenticated,]
     http_method_names = ['get','post','put','delete']
     # Pas de methode PATCH
 
@@ -146,6 +148,7 @@ class CommentViewset(MultipleSerializerMixin,
 
     serializer_class = CommentListSerializer
     detail_serializer_class = CommentSerializer
+    throttle_classes = [UserRateThrottle]
     permission_classes = [IsAuthenticated,IsAuthor]
     # Pas de methode PATCH
     http_method_names = ['get','post','put','delete']
@@ -180,6 +183,7 @@ class ContributorViewset(MultipleSerializerMixin,
 
     serializer_class = ContributorListSerializer
     detail_serializer_class = ContributorSerializer
+    throttle_classes = [UserRateThrottle]
     # permission_classes = [IsAuthenticated,]
     # Pas de methode PATCH ni PUT
     http_method_names = ['get','post','delete']

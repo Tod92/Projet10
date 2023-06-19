@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.db.models import Q
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 # from rest_framework.decorators import permission_classes
-# from rest_framework import status
+from rest_framework import status
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -197,18 +198,37 @@ class ContributorViewset(MultipleSerializerMixin,
         """
         self.project_id = self.kwargs.get("project_pk")
         self.project = get_object_or_404(Project, pk=self.project_id)
+
         return [IsAuthenticated(), CustomIsProjectAuthorOrContrib(project=self.project)]
 
     def get_queryset(self, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")
         return Contributor.objects.filter(project_id=project_id)
 
-    def perform_create(self, serializer):
-        project_id = self.kwargs.get("project_pk")
-        project = Project.objects.get(id=project_id)
-        serializer.save(project_id=project)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try :
+            self.perform_create(serializer) # Calls serializer.save()
+        except IntegrityError:
+            print('ici')
+            return Response({"Error": "this user is already a contributor for this project" }, status=status.HTTP_400_BAD_REQUEST)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-#
+
+
+
+#     def perform_create(self, serializer):
+#         project_id = self.kwargs.get("project_pk")
+#         project = Project.objects.get(id=project_id)
+#         try:
+#             serializer.save(project_id=project)
+#             print('la')
+#         except IntegrityError:
+#             print('ici')
+#             Response({"Fail": "blablal" }, status=status.HTTP_400_BAD_REQUEST)
+# #
 # class ProjectListCreate(APIView):
 #     """
 #     supports get and post
@@ -339,7 +359,7 @@ class ContributorViewset(MultipleSerializerMixin,
 #         )
 #         contributor.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
-#
+
 
 
 # class IssueViewset(ModelViewSet):

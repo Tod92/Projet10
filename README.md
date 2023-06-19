@@ -55,14 +55,18 @@ _Installation de venv requise : pip install venv_\
 
 La base de donnée a été peuplée avec les comptes et mots de passe de test suivants :
 
+admin :
+user : marge\
+password : ILoveOmer
+
+users :
 user : bart\
 password : LisaEstNulle
 
 user : lisa\
 password : BartEstNul
 
-user : marge\
-password : ILoveOmer
+
 
 ## fonctionnalités :
 
@@ -71,7 +75,7 @@ password : ILoveOmer
 
 * 19/06/2023 : Finalisation et tests avec population de la base de données
 * 06/06/2023 : Demarrage permission
-* 25/05/2023 : Bascule ModelViewSet
+* 25/05/2023 : Bascule ModelViewSet + NestedRouters
 * 15/05/2023 : premières requetes postman ok
 * 10/05/2023 : integration simple jwt
 * 09/05/2023 : init viewsets
